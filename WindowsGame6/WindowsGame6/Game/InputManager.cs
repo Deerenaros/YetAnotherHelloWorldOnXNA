@@ -20,7 +20,7 @@ namespace WindowsGame6 {
             string res = "(";
             bool first = true;
             foreach ( var el in pressedButtons ) {
-                res += ( first ? "" : ", " ) + el.Key;
+                res += ( first ? "" : ", " ) + el.type;
                 first = false;
             }
 
@@ -33,18 +33,14 @@ namespace WindowsGame6 {
         // Structures and enumes.
         #region structures
 
-        public enum Type {
-            pressing,
-            atOnce
-        }
-
         public enum GameButtons {
             left,
             up,
             right,
             down,
             exit,
-            pause
+            pause,
+            notpressed
         }
 
         public class Button {
@@ -73,6 +69,25 @@ namespace WindowsGame6 {
             public override int  GetHashCode(){
  	             return m_type.GetHashCode();
             }
+
+            public override bool Equals ( object obj ) {
+                if ( obj == null )
+                    return false;
+                Button btn = obj as Button;
+                return this.Equals ( btn );
+            }
+
+            public bool Equals ( Button btn ) {
+                return this.m_type == btn.m_type;
+            }
+
+            public static bool operator == ( Button left, Button right ) {
+                return left.Equals ( right );
+            }
+
+            public static bool operator != ( Button left, Button right ) {
+                return !left.Equals ( right );
+            }
         }
 
         #endregion
@@ -88,11 +103,12 @@ namespace WindowsGame6 {
                                         GamePad.GetState( PlayerIndex.Four  )
                                    };
         KeyboardState kbState = Keyboard.GetState ();
-        Dictionary< Buttons, GameButtons > gamePadToInput  = new Dictionary<Buttons, GameButtons> ();
-        Dictionary< Keys, GameButtons > keyboardToInput = new Dictionary<Keys, GameButtons> ();
+        Dictionary< Buttons, GameButtons > gamePadToInput  = new Dictionary< Buttons, GameButtons > ();
+        Dictionary< Keys, GameButtons > keyboardToInput = new Dictionary< Keys, GameButtons > ();
+        Dictionary< string, GameButtons > associations = new Dictionary< string, GameButtons > ();
         //Dictionary< GameButtons, Buttons > gamePadToInput  = new Dictionary<GameButtons, Buttons > ();
         //Dictionary< GameButtons, Keys  > keyboardToInput = new Dictionary<GameButtons, Keys > ();
-        public Dictionary< GameButtons, Button > pressedButtons = new Dictionary<GameButtons, Button> ();
+        public List< Button > pressedButtons = new List< Button > ();
 
         #endregion
 
@@ -137,14 +153,20 @@ namespace WindowsGame6 {
                             GamePad.GetState( PlayerIndex.Four  )
                         };
             KeyboardState kbState = Keyboard.GetState ();
+            Button btn_ = new Button ( GameButtons.pause ), _btn = new Button ( GameButtons.pause );
+            GameButtons b = btn_.type;
+            if ( btn_ != _btn )
+                return;
+
             foreach ( Keys k in keyboardToInput.Keys ) {
+                Button btn = new Button ( keyboardToInput[ k ] ) ;
                 if ( kbState.IsKeyDown( k ) ) {
-                    if ( !pressedButtons.ContainsKey ( keyboardToInput[ k ] ) ) {
-                        pressedButtons.Add ( keyboardToInput[ k ], new Button ( keyboardToInput[ k ] ) );
+                    if ( !pressedButtons.Contains ( btn ) ) {
+                        pressedButtons.Add ( btn );
                     } // if
                 } else {
-                    if ( pressedButtons.ContainsKey ( keyboardToInput[ k ] ) ) {
-                        pressedButtons.Remove ( keyboardToInput[ k ] );
+                    if ( pressedButtons.Contains ( btn ) ) {
+                        pressedButtons.Remove ( btn );
                     } // if
                 } // if/else IsKeyDown
             } // foreach k
@@ -152,6 +174,29 @@ namespace WindowsGame6 {
             base.Update ( gameTime );
         } // Update
 
+        #endregion
+
+
+        // provides usefull custom identification system
+        #region associations
+        public void associate ( string name, GameButtons button ) {
+            associations[ name ] = button;
+        }
+
+        public bool this[ string name, bool once = false ] {
+            get {
+                if ( associations.ContainsKey ( name ) ) {
+                    Button btn = new Button ( associations[ name ] );
+                    foreach ( Button b in pressedButtons ) {
+                        if ( b == btn ) {
+                            return !(once && b.processed);
+                        }
+                    }
+                }
+
+                return false;
+            }
+        }
         #endregion
     }
 }

@@ -224,9 +224,13 @@ namespace WindowsGame6 {
 
         // keyboard inits and other methods
         #region keyboard
-
-
-
+        void initKeys () {
+            Game1.inputs.associate ( "down", InputManager.GameButtons.down );
+            Game1.inputs.associate ( "up", InputManager.GameButtons.up );
+            Game1.inputs.associate ( "left", InputManager.GameButtons.left );
+            Game1.inputs.associate ( "right", InputManager.GameButtons.right );
+            Game1.inputs.associate ( "pause", InputManager.GameButtons.pause );
+        }
         #endregion
 
 
@@ -253,6 +257,8 @@ namespace WindowsGame6 {
         public override void Initialize () {
             int id = Game1.events.newEvent ( windHero, new EventManager.EventArgs ( "x y", 12, 5 ) );
             tiles.setEventToTile ( 5, 5, id );
+
+            initKeys ();
 
             QuestManager.Quest q = new QuestManager.Quest();
             q.objective = "Go into the temple.";
@@ -288,11 +294,8 @@ namespace WindowsGame6 {
         }
 
         public override void Update ( GameTime gameTime ) {
-            if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.pause ) ) {
-                if ( !Game1.inputs.pressedButtons[ InputManager.GameButtons.pause ].processed ) {
-                    toogleFreezeWoorld ();
-                }
-            }
+            if ( Game1.inputs["pause", true] )
+                    toogleFreezeWoorld();
             updateHero ();
             hero.Update ();
             base.Update ( gameTime );
@@ -326,25 +329,25 @@ namespace WindowsGame6 {
         
         public void updateHero () {
             if ( !pause ) {
-                if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.down ) ) {
+                if ( Game1.inputs["down"] ) {
                     if ( hero.heroTile.y < tiles.sizeY - 1 ) {
                         if ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ].isPathable () ) {
                             hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ] );
                         }
                     }
-                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.up ) ) {
+                } else if ( Game1.inputs["up"] ) {
                     if ( hero.heroTile.y > 0 ) {
                         if ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ].isPathable () ) {
                             hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ] );
                         }
                     }
-                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.left ) ) {
+                } else if ( Game1.inputs["left"] ) {
                     if ( hero.heroTile.x > 0 ) {
                         if ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ].isPathable () ) {
                             hero.moveToTile ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ] );
                         }
                     }
-                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.right ) ) {
+                } else if ( Game1.inputs["right"] ) {
                     if ( hero.heroTile.x < tiles.sizeX - 1 ) {
                         if ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ].isPathable () ) {
                             hero.moveToTile ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ] );
