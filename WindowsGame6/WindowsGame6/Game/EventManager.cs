@@ -15,8 +15,9 @@ namespace WindowsGame6 {
         // fields... that are incomprehensible (fuck yeah, you go to translate.google.com!)
         #region fields
 
-        Dictionary<int, Action> actions;
-        Dictionary<int, ActionInfo> infos;
+        public 
+        Dictionary<int, Event> events;
+        Dictionary<int, EventArgs> args;
         int counter = 0;
 
         #endregion
@@ -24,32 +25,39 @@ namespace WindowsGame6 {
 
         // structures... same that are above
         #region structures
+        public delegate void Event ( EventArgs actInfo );
 
-        public delegate void Action ( ActionInfo actInfo );
-
-        public class ActionInfo {
+        public class EventArgs {
             Dictionary<string, int> m_args = new Dictionary<string, int> ();
-            public ActionInfo ( string args, params int[] argValues ) {
-                if ( args.Length == 0 && argValues.Length == 0 ) {
-                    return;
+
+            public EventArgs () {
+                return;
+            }
+
+            public EventArgs ( string args ) {
+                string[] argNames = args.Split ( ' ' );
+                for ( int i = 0; i < argNames.Length; i++ ) {
+                    m_args.Add ( argNames[ i ], 1 );
+                }
+            }
+
+            public EventArgs ( string args, params int[] argValues ) {
+                string[] argNames = args.Split ( ' ' );
+                if ( argNames.Length != argValues.Length ) {
+                    throw new Exception ( "WTF!? Arguments are too much or too few!" ); //Hi, mgimo
                 }
 
-                string[] argNames = args.Split ( ' ' );
-                string mode = argNames[ 0 ];
-                argNames = argNames.Skip ( 1 ).ToArray ();
-                int n = argNames.Length;
-                if ( mode == "pairset" ) {
-                    if ( argNames.Length != argValues.Length ) {
-                        throw new Exception ( "WTF!? Arguments are too much or too few!" ); //Hi, mgimo
-                    }
+                for ( int i = 0; i < argNames.Length; i++ ) {
+                    m_args.Add ( argNames[ i ], argValues[ i ] );
+                }
+            }
 
-                    for ( int i = 0; i < n; i++ ) {
-                        m_args.Add ( argNames[ i ], argValues[ i ] );
+            public void attachArgs ( EventArgs args ) {
+                foreach ( var arg in args.m_args ) {
+                    if ( m_args.ContainsKey ( arg.Key ) ) {
+                        throw new Exception ( "EventManager.EventArgs.attachArgs: argument name collizion!" );
                     }
-                } else if ( mode == "juststrings" ) {
-                    for ( int i = 0; i < n; i++ ) {
-                        m_args.Add ( argNames[ i ], 1 );
-                    }
+                    m_args.Add ( arg.Key, arg.Value );
                 }
             }
 
@@ -74,8 +82,8 @@ namespace WindowsGame6 {
         #region XNA
 
         public EventManager ( Game game ) : base ( game ) {
-            actions = new Dictionary<int, Action> ();
-            infos = new Dictionary<int, ActionInfo> ();
+            events = new Dictionary<int, Event> ();
+            args = new Dictionary<int, EventArgs> ();
         }
 
         public override void Initialize () {
@@ -94,18 +102,44 @@ namespace WindowsGame6 {
         // methods, that provide event logic
         #region eventLogic
 
-        public int addEvent( Action act, ActionInfo info ) {
-            actions[ counter ] = act;
-            infos[ counter ] = info;
+        public int newEvent( Event act, EventArgs info ) {
+            events[ counter ] = act;
+            args[ counter ] = info;
             return counter++;
         }
 
         public bool runEvent ( int id ) {
-            if ( actions.ContainsKey ( id ) ) {
-                actions[ id ] ( infos[ id ] );
+            if ( events.ContainsKey ( id ) ) {
+                events[ id ] ( args[ id ] );
                 return true;
             }
             return false;
+        }
+
+        public void attachToEvent ( int id, Event act, EventArgs args ) {
+            if ( events.ContainsKey ( id ) ) {
+                events[ id ] += act;
+                this.args[ id ].attachArgs ( args );
+            } else {
+                if ( id < counter ) {
+                    events[ id ] = act;
+                } else {
+                    throw new Exception ( "EventManager.addToEvent: event is not initialized!" );
+                }
+            }
+        }
+
+        public void deleteEvent ( int id ) {
+            events.Remove ( id );
+            args.Remove ( id );
+        }
+        
+        // needs to rewrite becouse could be bags if we deattached from removed event but after added event back
+        // end it's not deattaching from EventArgs =(
+        public void deattachFromEvent ( int id, Event act ) {
+            if ( events.ContainsKey ( id ) ) {
+                events[ id ] -= act;
+            }
         }
 
         #endregion

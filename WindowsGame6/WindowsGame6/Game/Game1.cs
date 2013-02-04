@@ -18,6 +18,7 @@ namespace WindowsGame6 {
         public static InputManager inputs;
         public static EventManager events;
         public static DebugDrawer dbgDrawer;
+        public static QuestManager quests;
 
         #endregion
 
@@ -40,33 +41,38 @@ namespace WindowsGame6 {
             inputs = new InputManager ( this );
             events = new EventManager ( this );
             world = new World ( this );
+            quests = new QuestManager ( this );
 
             world.makeTileSetFromString ( "grass:g ground:G stone:S sizex:15 sizey:11",
                                           "ggggggggggggggg",
-                                          "gGGGSGSGGGgGGGg",
-                                          "gGGSSGSSGGgGSGg",
-                                          "gGSSSGSSSGgGGGg",
+                                          "gGGGSGSGGGGGGGg",
+                                          "gGGSSGSSSSSSSSS",
+                                          "gGSSSGSSSGGGGGg",
                                           "gSSSSGSSSSggggg",
                                           "gGGGGGGGGGggggg",
                                           "gSSSSGSSSSggggg",
-                                          "gGSSSGSSSGgGGGg",
-                                          "gGGSSGSSGGgGSGg",
-                                          "gGGGSGSGGGgGGGg",
+                                          "gGSSSGSSSGGGGGg",
+                                          "gGGSSGSSSSSSSSS",
+                                          "gGGGSGSGGGGGGGg",
                                           "ggggggggggggggg");
 
             Content.RootDirectory = "Content";
         }
 
-        public void exit ( EventManager.ActionInfo nullAct ) {
+        public void exit ( EventManager.EventArgs nullAct ) {
             Exit ();
         }
 
         protected override void Initialize () {
+            //quest manager
+            Components.Add ( quests );
+            Services.AddService ( typeof ( QuestManager ), quests );
+
             //input manager
             Components.Add ( inputs );
             Services.AddService ( typeof ( InputManager ), inputs );
 
-            inputs.setBind ( InputManager.GameButtons.exit, events.addEvent( exit, new EventManager.ActionInfo( "" ) ) );
+            //inputs.setBind ( InputManager.GameButtons.exit, events.addEvent( exit, new EventManager.ActionInfo( "" ) ) );
 
             //event manager
             Components.Add ( events );

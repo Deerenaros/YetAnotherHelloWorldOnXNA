@@ -44,7 +44,6 @@ namespace WindowsGame6 {
                 stone
             };
 
-            public Type[] types = { Type.grass, Type.ground, Type.stone };
             public const int Size = 32;
             public Type type;
             public int x = 0, y = 0;
@@ -226,35 +225,7 @@ namespace WindowsGame6 {
         // keyboard inits and other methods
         #region keyboard
 
-        private void InitKeys ( ) {
-            keyBinds.Add( InputManager.GameButtons.down,
-                          Game1.events.addEvent ( moveHero,
-                                                  new EventManager.ActionInfo ( "juststrings down") ) );
-            keyBinds.Add( InputManager.GameButtons.up,
-                          Game1.events.addEvent ( moveHero,
-                                                  new EventManager.ActionInfo ( "juststrings up") ) );
-            keyBinds.Add( InputManager.GameButtons.left,
-                          Game1.events.addEvent ( moveHero,
-                                                  new EventManager.ActionInfo ( "juststrings left") ) );
-            keyBinds.Add( InputManager.GameButtons.right,
-                          Game1.events.addEvent ( moveHero,
-                                                  new EventManager.ActionInfo ( "juststrings right") ) );
-            foreach ( var kbind in keyBinds ) {
-                Game1.inputs.setBind ( kbind.Key, kbind.Value );
-            }
-        }
 
-        private void DeinitKeys () {
-            foreach ( var kbind in keyBinds ) {
-                Game1.inputs.unsetBind ( kbind.Key );
-            }
-        }
-
-        private void ReinitKeys () {
-            foreach ( var kbind in keyBinds ) {
-                Game1.inputs.setBind ( kbind.Key, kbind.Value );
-            }
-        }
 
         #endregion
 
@@ -280,16 +251,23 @@ namespace WindowsGame6 {
         }
 
         public override void Initialize () {
-            InitKeys ();
-            Game1.inputs.setBind ( InputManager.GameButtons.pause,
-              Game1.events.addEvent ( toogleFreezeWoorld,
-                                      new EventManager.ActionInfo ( "" ) ), InputManager.Type.atOnce );
+            int id = Game1.events.newEvent ( windHero, new EventManager.EventArgs ( "x y", 12, 5 ) );
+            tiles.setEventToTile ( 5, 5, id );
 
-            tiles.setEventToTile ( 5, 5, Game1.events.addEvent ( windHero,
-                                                                 new EventManager.ActionInfo ( "pairset x y",      // sssssssss...
-                                                                                                12, 5 )    // ...suuuuuuuperbl!
-                                                                )                                          // ...ffffff...
-                                 );                                                                        // ...fooooooormating!
+            QuestManager.Quest q = new QuestManager.Quest();
+            q.objective = "Go into the temple.";
+            q.title = "Begining";
+            q.state = QuestManager.Quest.State.active;
+            Game1.quests.addQuest ( q );
+            QuestManager qsts = Game1.quests;
+            Game1.events.attachToEvent ( id, qsts.goToNextQuest, new EventManager.EventArgs () );
+
+            q = new QuestManager.Quest ();
+            q.objective = "Find the exit. If u can... or die =/";
+            q.title = "Ups";
+            q.state = QuestManager.Quest.State.unobtained;
+            Game1.quests.addQuest ( q );
+            Game1.events.attachToEvent ( id, q.setState, new EventManager.EventArgs ( "state", QuestManager.Quest.State.active.GetHashCode () ) );
 
             Game1.dbgDrawer.addDebugOutputToDraw ( "World", "Hero", getHeroDbg );
             Game1.dbgDrawer.addDebugOutputToDraw ( "World", "Pause", isPause );
@@ -310,6 +288,12 @@ namespace WindowsGame6 {
         }
 
         public override void Update ( GameTime gameTime ) {
+            if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.pause ) ) {
+                if ( !Game1.inputs.pressedButtons[ InputManager.GameButtons.pause ].processed ) {
+                    toogleFreezeWoorld ();
+                }
+            }
+            updateHero ();
             hero.Update ();
             base.Update ( gameTime );
         }
@@ -340,35 +324,37 @@ namespace WindowsGame6 {
         // all logic events (keyboard or other)
         #region events
         
-        public void moveHero ( EventManager.ActionInfo actInfo ) {
-            if ( actInfo[ "down" ] != 0 ) {
-                if ( hero.heroTile.y < tiles.sizeY - 1 ) {
-                    if ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ].isPathable () ) {
-                        hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ] );
+        public void updateHero () {
+            if ( !pause ) {
+                if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.down ) ) {
+                    if ( hero.heroTile.y < tiles.sizeY - 1 ) {
+                        if ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ].isPathable () ) {
+                            hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y + 1 ] );
+                        }
                     }
-                }
-            } else if ( actInfo[ "up" ] != 0 ) {
-                if ( hero.heroTile.y > 0 ) {
-                    if ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ].isPathable () ) {
-                        hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ] );
+                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.up ) ) {
+                    if ( hero.heroTile.y > 0 ) {
+                        if ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ].isPathable () ) {
+                            hero.moveToTile ( tiles[ hero.heroTile.x, hero.heroTile.y - 1 ] );
+                        }
                     }
-                }
-            } else if ( actInfo[ "left" ] != 0 ) {
-                if ( hero.heroTile.x > 0 ) {
-                    if ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ].isPathable () ) {
-                        hero.moveToTile ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ] );
+                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.left ) ) {
+                    if ( hero.heroTile.x > 0 ) {
+                        if ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ].isPathable () ) {
+                            hero.moveToTile ( tiles[ hero.heroTile.x - 1, hero.heroTile.y ] );
+                        }
                     }
-                }
-            } else if ( actInfo[ "right" ] != 0 ) {
-                if ( hero.heroTile.x < tiles.sizeX - 1 ) {
-                    if ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ].isPathable () ) {
-                        hero.moveToTile ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ] );
+                } else if ( Game1.inputs.pressedButtons.ContainsKey ( InputManager.GameButtons.right ) ) {
+                    if ( hero.heroTile.x < tiles.sizeX - 1 ) {
+                        if ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ].isPathable () ) {
+                            hero.moveToTile ( tiles[ hero.heroTile.x + 1, hero.heroTile.y ] );
+                        }
                     }
                 }
             }
         }
 
-        public void windHero ( EventManager.ActionInfo actInfo ) {
+        public void windHero ( EventManager.EventArgs actInfo ) {
             if ( 0 <= actInfo[ "x" ] && actInfo[ "x" ] < tiles.sizeX &&
                  0 <= actInfo[ "y" ] && actInfo[ "y" ] < tiles.sizeY ) {
                 hero.moveToTile ( tiles[ actInfo[ "x" ], actInfo[ "y" ] ] );
@@ -377,12 +363,10 @@ namespace WindowsGame6 {
             }
         }
 
-        public void toogleFreezeWoorld ( EventManager.ActionInfo act ) {
+        public void toogleFreezeWoorld ( ) {
             if ( pause ) {
-                ReinitKeys ();
                 pause = false;
             } else {
-                DeinitKeys ();
                 pause = true;
             }
         }
