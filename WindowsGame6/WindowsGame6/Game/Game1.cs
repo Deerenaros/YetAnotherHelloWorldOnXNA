@@ -59,10 +59,6 @@ namespace WindowsGame6 {
             Content.RootDirectory = "Content";
         }
 
-        public void exit ( EventManager.EventArgs nullAct ) {
-            Exit ();
-        }
-
         protected override void Initialize () {
             //quest manager
             Components.Add ( quests );

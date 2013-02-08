@@ -22,7 +22,7 @@ namespace WindowsGame6 {
 
         public string getCurrentQuest() {
             string res = "";
-            foreach ( Quest q in quests ) {
+            foreach ( Quest q in quests.Values ) {
                 if ( q.state == Quest.State.active ) {
                     res += q.title + "\r\n\t" + q.objective;
                     break;
@@ -49,18 +49,6 @@ namespace WindowsGame6 {
             public string title;
             public string objective;
             public State state;
-
-            public void setState ( EventManager.EventArgs info ) {
-                foreach ( State st in Enum.GetValues ( typeof ( State ) ) ) {
-                    if ( info[ "state" ] == st.GetHashCode() ) {
-                        state = st;
-                        break;
-                    } else if ( info[ "setstate" ]  == st.GetHashCode () ) { // fucking crutches!!!
-                        state = st;
-                        break;
-                    }
-                }
-            }
         }
 
         #endregion
@@ -68,7 +56,7 @@ namespace WindowsGame6 {
 
         #region fields
 
-        List< Quest > quests = new List< Quest > ();
+        Dictionary< string, Quest > quests = new Dictionary<string, Quest> ();
 
         #endregion
 
@@ -93,18 +81,23 @@ namespace WindowsGame6 {
 
         #region logic
 
-        public void addQuest ( Quest qst ) {
-            quests.Add ( qst );
+        public void addQuest ( string name, Quest qst ) {
+            quests.Add ( name, qst );
         }
 
-        public void goToNextQuest ( EventManager.EventArgs e ) {
-            for ( int i = 0; i < quests.Count; i++ ) {
-                if ( quests[ i ].state == Quest.State.active ) {
-                    quests[ i ].state = Quest.State.deactivated;
-                    if ( ++i < quests.Count ) {
-                        quests[ i ].state = Quest.State.deactivated;
+        public void setPassed ( string name ) {
+            if ( quests.ContainsKey ( name ) ) {
+                quests[ name ].state = Quest.State.passed;
+            }
+        }
+
+        public void setActive ( string name ) {
+            if ( quests.ContainsKey ( name ) ) {
+                quests[ name ].state = Quest.State.active;
+                foreach ( var q in quests ) {
+                    if ( q.Key != name && q.Value.state == Quest.State.active ) {
+                        q.Value.state = Quest.State.deactivated;
                     }
-                    break;
                 }
             }
         }

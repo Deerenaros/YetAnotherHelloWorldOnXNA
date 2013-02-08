@@ -255,7 +255,8 @@ namespace WindowsGame6 {
         }
 
         public override void Initialize () {
-            int id = Game1.events.newEvent ( windHero, new EventManager.EventArgs ( "x y", 12, 5 ) );
+            EventManager.Event ev = () => windHero ( 12, 5 );
+            int id = Game1.events.newEvent ( ev );
             tiles.setEventToTile ( 5, 5, id );
 
             initKeys ();
@@ -264,16 +265,22 @@ namespace WindowsGame6 {
             q.objective = "Go into the temple.";
             q.title = "Begining";
             q.state = QuestManager.Quest.State.active;
-            Game1.quests.addQuest ( q );
+            Game1.quests.addQuest ( "first", q );
             QuestManager qsts = Game1.quests;
-            Game1.events.attachToEvent ( id, qsts.goToNextQuest, new EventManager.EventArgs () );
 
             q = new QuestManager.Quest ();
             q.objective = "Find the exit. If u can... or die =/";
             q.title = "Ups";
             q.state = QuestManager.Quest.State.unobtained;
-            Game1.quests.addQuest ( q );
-            Game1.events.attachToEvent ( id, q.setState, new EventManager.EventArgs ( "state", QuestManager.Quest.State.active.GetHashCode () ) );
+            Game1.quests.addQuest ( "second", q );
+
+            EventManager.Event e1 = () => Game1.quests.setPassed("first"),
+                e2 = () => Game1.quests.setActive("second");
+            EventManager.Event e = e1 + e2;
+
+            Game1.events.attachToEvent ( id,  e );
+            Game1.events.attachToEvent ( id, () => Game1.events.deattachFromEvent ( id, ev ) );
+            Game1.events.attachToEvent ( id, () => Game1.events.deattachFromEvent ( id, e ) );
 
             Game1.dbgDrawer.addDebugOutputToDraw ( "World", "Hero", getHeroDbg );
             Game1.dbgDrawer.addDebugOutputToDraw ( "World", "Pause", isPause );
@@ -357,10 +364,10 @@ namespace WindowsGame6 {
             }
         }
 
-        public void windHero ( EventManager.EventArgs actInfo ) {
-            if ( 0 <= actInfo[ "x" ] && actInfo[ "x" ] < tiles.sizeX &&
-                 0 <= actInfo[ "y" ] && actInfo[ "y" ] < tiles.sizeY ) {
-                hero.moveToTile ( tiles[ actInfo[ "x" ], actInfo[ "y" ] ] );
+        public void windHero ( int x, int y ) {
+            if ( 0 <= x && x < tiles.sizeX &&
+                 0 <= y && y < tiles.sizeY ) {
+                hero.moveToTile ( tiles[ x, y ] );
             } else {
                 throw new Exception ( "World.windHero(...): Error event processing!" );
             }
