@@ -26,5 +26,6 @@ ipch/
 *.ncb
 *.opensdf
 *.sdf
+*.cachefile
 Thumbs.db
 Desktop.ini
