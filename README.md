@@ -13,7 +13,7 @@ Of course it's all for this:
   ,'   ( \  )      `.  \ __.._ .: y
  (  \\_-) )'-.____...\  `._   //-'
   `. `-' /-._)))      `-._)))
-    `...'         hjw
+    `...'         KOT
 </pre>
 
 Fucking github with .md!!!111111...
