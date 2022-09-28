@@ -15,5 +15,3 @@ Of course it's all for this:
   `. `-' /-._)))      `-._)))
     `...'         KOT
 </pre>
-
-Fucking github with .md!!!111111...
